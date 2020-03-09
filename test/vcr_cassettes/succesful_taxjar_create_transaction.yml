@@ -1,0 +1,67 @@
+---
+http_interactions:
+- request:
+    method: post
+    uri: https://api.taxjar.com/v2/taxes
+    body:
+      encoding: UTF-8
+      string: '{"from_country":"US","from_zip":"19106","from_state":"PA","from_city":"Philadelphia","from_street":"12
+        N. 3rd St.","to_country":"US","to_zip":"19106","to_state":"PA","to_city":"Philadelphia","to_street":"22
+        S 3rd St","amount":10.0,"shipping":0.0,"nexus_addresses":[{"id":"Main Warehouse","country":"US","zip":"19106","state":"PA","city":"Philadelphia","street":"12
+        N. 3rd St."}],"line_items":[{"id":"SKU1","quantity":2,"product_tax_code":"P0000000","unit_price":"10.0","discount":0.0}]}'
+    headers:
+      User-Agent:
+      - TaxjarRubyGem/2.4.0
+      Authorization:
+      - Bearer 0b025b123017608d76593f4da3467083
+      Connection:
+      - close
+      Content-Type:
+      - application/json; charset=UTF-8
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+      Content-Length:
+      - '1449'
+      Connection:
+      - close
+      Date:
+      - Fri, 30 Nov 2018 05:36:23 GMT
+      X-Amzn-Requestid:
+      - df6cbab8-f461-11e8-aee7-4730d8495031
+      X-Runtime:
+      - '0.076226'
+      X-Amzn-Remapped-Content-Length:
+      - '1449'
+      X-Amzn-Remapped-Connection:
+      - keep-alive
+      Via:
+      - 1.1 vegur, 1.1 3fde21c07022d5a0a6d5c2e220c1ce8f.cloudfront.net (CloudFront)
+      X-Request-Id:
+      - 2f04330f-fc12-4fc3-aa3d-853e082b8eed
+      X-Amz-Apigw-Id:
+      - RKTdoHVIIAMFslg=
+      Vary:
+      - Origin
+      Cache-Control:
+      - max-age=0, private, must-revalidate
+      X-Amzn-Remapped-Server:
+      - Cowboy
+      Etag:
+      - W/"1564d2ee46f8d691bd4c988ea825f4ac"
+      X-Amzn-Remapped-Date:
+      - Fri, 30 Nov 2018 05:36:22 GMT
+      X-Cache:
+      - Miss from cloudfront
+      X-Amz-Cf-Id:
+      - 4ugBzah0q7Gev9LiUlOg-sfTert6CS3cXsIikks3W0shh-Iwa4jPiQ==
+    body:
+      encoding: ASCII-8BIT
+      string: '{"tax":{"order_total_amount":20.0,"shipping":0.0,"taxable_amount":20.0,"amount_to_collect":1.6,"rate":0.08,"has_nexus":true,"freight_taxable":true,"tax_source":"origin","jurisdictions":{"country":"US","state":"PA","county":"PHILADELPHIA","city":"PHILADELPHIA"},"breakdown":{"taxable_amount":20.0,"tax_collectable":1.6,"combined_tax_rate":0.08,"state_taxable_amount":20.0,"state_tax_rate":0.06,"state_tax_collectable":1.2,"county_taxable_amount":20.0,"county_tax_rate":0.02,"county_tax_collectable":0.4,"city_taxable_amount":0.0,"city_tax_rate":0.0,"city_tax_collectable":0.0,"special_district_taxable_amount":0.0,"special_tax_rate":0.0,"special_district_tax_collectable":0.0,"shipping":{"taxable_amount":0.0,"tax_collectable":0.0,"combined_tax_rate":0.08,"state_taxable_amount":0.0,"state_sales_tax_rate":0.06,"state_amount":0.0,"county_taxable_amount":0.0,"county_tax_rate":0.02,"county_amount":0.0,"city_taxable_amount":0.0,"city_tax_rate":0.0,"city_amount":0.0,"special_taxable_amount":0.0,"special_tax_rate":0.0,"special_district_amount":0.0},"line_items":[{"id":"SKU1","taxable_amount":20.0,"tax_collectable":1.6,"combined_tax_rate":0.08,"state_taxable_amount":20.0,"state_sales_tax_rate":0.06,"state_amount":1.2,"county_taxable_amount":20.0,"county_tax_rate":0.02,"county_amount":0.4,"city_taxable_amount":0.0,"city_tax_rate":0.0,"city_amount":0.0,"special_district_taxable_amount":0.0,"special_tax_rate":0.0,"special_district_amount":0.0}]}}}'
+    http_version: 
+  recorded_at: Fri, 30 Nov 2018 05:36:23 GMT
+recorded_with: VCR 2.9.3

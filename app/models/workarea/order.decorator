@@ -1,0 +1,12 @@
+module Workarea
+  decorate Order, with: :taxjar do
+    decorated do
+      field :tax_invoice_sent_at, type: DateTime
+    end
+
+    def tax_invoice_sent?
+      tax_invoice_sent_at.present?
+    end
+
+  end
+end

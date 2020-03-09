@@ -1,0 +1,7 @@
+inherit_from: .rails-rubocop.yml
+
+AllCops:
+  Exclude:
+    - 'lib/taxjar.rb'
+    - 'lib/taxjar/**/*'
+    - 'vendor/**/*'

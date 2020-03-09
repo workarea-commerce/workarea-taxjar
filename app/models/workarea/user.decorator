@@ -1,0 +1,7 @@
+module Workarea
+  decorate User, with: :taxjar do
+    decorated do
+      field :customer_usage_type, type: String, default: "non_exempt"
+    end
+  end
+end
