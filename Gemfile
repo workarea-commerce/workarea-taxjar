@@ -1,12 +1,12 @@
-source 'https://rubygems.org'
-git_source(:github) { |repo| "git@github.com:#{repo}.git" }
+source "https://rubygems.org"
 
 gemspec
 
 source 'https://gems.workarea.com' do
+  gem 'workarea-b2b'
   gem 'workarea-oms'
 end
 
 group :test do
-  gem 'simplecov', require: false
+  gem "simplecov"
 end
