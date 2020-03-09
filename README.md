@@ -75,3 +75,8 @@ in the same state as a taxable nexus. This will reduce the amount of extraneous 
 By default the sandbox API endpoint will be used in every non-production environment, with production uses the Taxjar production API endpoint.
 
 This integration makes use of the ```workarea-circuit-breaker``` plugin which will disable tax calculation when the API service is unavailable.  The default Workarea Tax Calculator will be used when the Taxjar api service is not in use.
+
+
+License
+--------------------------------------------------------------------------------
+Workarea Commerce Platform is released under the [Business Software License](https://github.com/workarea-commerce/workarea/blob/master/LICENSE)

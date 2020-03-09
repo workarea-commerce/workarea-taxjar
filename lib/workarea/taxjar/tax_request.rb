@@ -59,7 +59,6 @@ module Workarea
         def lines
           order_line_items.map(&:hash)
         end
-
     end
   end
 end

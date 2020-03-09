@@ -46,7 +46,6 @@ module Workarea
       def body
         @body ||= response.to_h
       end
-
     end
   end
 end
