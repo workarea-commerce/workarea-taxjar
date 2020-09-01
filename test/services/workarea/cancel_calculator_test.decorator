@@ -1,0 +1,408 @@
+module Workarea
+  decorate CancelCalculatorTest, with: :taxjar do
+    def test_shipping_totals
+      service = create_shipping_service(tax_code: '001', rates: [{ price: 9.95.to_m }])
+
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 1)
+      complete_checkout(order, shipping_service: service)
+      create_and_commit_shipments(order)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(0.to_m, calculator.shipping_subtotal)
+      assert_equal(0.to_m, calculator.shipping_tax_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_shipping: true
+      )
+
+      assert_equal(9.95.to_m, calculator.shipping_subtotal)
+      assert_equal(0.2.to_m, calculator.shipping_tax_total)
+      assert_equal(10.15.to_m, calculator.shipping_total)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_shipping: false
+      )
+
+      assert_equal(0.to_m, calculator.shipping_subtotal)
+      assert_equal(0.to_m, calculator.shipping_tax_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+    end
+
+    def test_shipping_totals_with_multiple_shippings
+      build_split_shipping_order
+      create_and_commit_shipments(@order)
+
+      calculator = CancelCalculator.new(
+        @order,
+        quantities: { @order.items.first.id => 1 }
+      )
+
+      assert_equal(0.to_m, calculator.shipping_subtotal)
+      assert_equal(0.to_m, calculator.shipping_tax_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+
+      calculator = CancelCalculator.new(
+        @order,
+        quantities: { @order.items.first.id => 1 },
+        refund_shipping: true
+      )
+
+      assert_equal(15.to_m, calculator.shipping_subtotal)
+      assert_equal(0.6.to_m, calculator.shipping_tax_total)
+      assert_equal(15.6.to_m, calculator.shipping_total)
+
+      calculator = CancelCalculator.new(
+        @order,
+        quantities: { @order.items.first.id => 1 },
+        refund_shipping: false
+      )
+
+      assert_equal(0.to_m, calculator.shipping_subtotal)
+      assert_equal(0.to_m, calculator.shipping_tax_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+    end
+
+    def test_item_totals
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 1)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.to_m, calculator.item_subtotal)
+      assert_equal(0.2.to_m, calculator.item_tax_total)
+      assert_equal(10.2.to_m, calculator.item_total)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_items: true
+      )
+
+      assert_equal(10.to_m, calculator.item_subtotal)
+      assert_equal(0.2.to_m, calculator.item_tax_total)
+      assert_equal(10.2.to_m, calculator.item_total)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_items: false
+      )
+
+      assert_equal(0.to_m, calculator.item_subtotal)
+      assert_equal(0.to_m, calculator.item_tax_total)
+      assert_equal(0.to_m, calculator.item_total)
+    end
+
+    def test_full_cancellation
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 1)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_shipping: true
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(1.02.to_m, calculator.shipping_total)
+      assert_equal(11.22.to_m, calculator.owed_to_customer)
+      assert_equal(11.22.to_m, calculator.refund_total)
+    end
+
+    def test_uncaptured_order
+      order = Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 1)
+      complete_checkout(order)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_shipping: true
+      )
+
+      assert_equal(0.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(0.to_m, calculator.remaining_refundable_amount)
+      assert_equal(0.to_m, calculator.owed_to_customer)
+      assert_equal(0.to_m, calculator.refund_total)
+    end
+
+    def test_partial_cancellation
+      order = Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 3)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      shipping = Shipping.find_by_order(order.id)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+        refund_shipping: true
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(1.02.to_m, calculator.shipping_total)
+      assert_equal(11.22.to_m, calculator.owed_to_customer)
+      assert_equal(11.22.to_m, calculator.refund_total)
+
+      CommitCancellation.new(
+        order,
+        quantities: { shipping.id.to_s => { order.items.first.id.to_s => 1 } },
+        refund_amount: calculator.refund_total,
+        refund_shipping: true
+      ).perform
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.2.to_m, calculator.owed_to_customer)
+      assert_equal(10.2.to_m, calculator.refund_total)
+
+      CommitCancellation.new(
+        order,
+        quantities: { shipping.id.to_s => { order.items.first.id.to_s => 1 } },
+        refund_amount: calculator.refund_total
+      ).perform
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.2.to_m, calculator.owed_to_customer)
+      assert_equal(10.2.to_m, calculator.refund_total)
+
+      CommitCancellation.new(
+        order,
+        quantities: { shipping.id.to_s => { order.items.first.id.to_s => 1 } },
+        refund_amount: calculator.refund_total
+      ).perform
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(0.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(0.to_m, calculator.owed_to_customer)
+      assert_equal(0.to_m, calculator.refund_total)
+    end
+
+    def test_cancel_with_an_existing_refund
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 1)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      payment = Payment.find(order.id)
+      Payment::Refund.new(
+        payment: payment,
+        amounts: { payment.credit_card.id.to_s => '5.00' }
+      ).complete!
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 },
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(5.to_m, calculator.refunded_total)
+      assert_equal(6.22.to_m, calculator.remaining_refundable_amount)
+      assert_equal(10.2.to_m, calculator.owed_to_customer)
+      assert_equal(6.22.to_m, calculator.refund_total)
+    end
+
+    def test_rounding_errors
+      create_product_discount(
+        product_ids: %w(PRODUCT),
+        amount_type: 'percent',
+        amount: 0.33,
+        promo_codes: %w(foo)
+      )
+
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com', promo_codes: %w(foo))
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 2)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      shipping = Shipping.find_by_order(order.id)
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.16.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.16.to_m, calculator.owed_to_customer)
+      assert_equal(10.16.to_m, calculator.refund_total)
+
+      fulfillment = Fulfillment.find(order.id)
+      fulfillment.cancel_items([
+        { id: order.items.first.id, quantity: 1, shipping_id: shipping.id.to_s }
+      ])
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.17.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.17.to_m, calculator.owed_to_customer)
+      assert_equal(10.17.to_m, calculator.refund_total)
+    end
+
+    def test_rounding_errors_with_shipped_items
+      create_product_discount(
+        product_ids: %w(PRODUCT),
+        amount_type: 'percent',
+        amount: 0.33,
+        promo_codes: %w(foo)
+      )
+
+      order = Workarea::Order.new(email: 'bcrouse@weblinc.com', promo_codes: %w(foo))
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 2)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      shipping = Shipping.find_by_order(order.id)
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.16.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.16.to_m, calculator.owed_to_customer)
+      assert_equal(10.16.to_m, calculator.refund_total)
+
+      CommitCancellation.new(
+        order,
+        quantities: { shipping.id.to_s => { order.items.first.id.to_s => 1 } },
+        refund_amount: calculator.refund_total
+      ).perform
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(10.17.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(10.17.to_m, calculator.owed_to_customer)
+      assert_equal(10.17.to_m, calculator.refund_total)
+    end
+
+    def test_partially_captured_order
+      order = Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 2)
+      complete_checkout(order)
+
+      create_and_commit_shipments(
+        order,
+        shipments: [{
+            shipping_id: Shipping.find_by_order(order.id).id.to_s,
+            quantities: { order.items.first.id.to_s => 1 }
+        }]
+      )
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 1 }
+      )
+
+      assert_equal(0.to_m, calculator.item_total)
+      assert_equal(0.to_m, calculator.shipping_total)
+      assert_equal(11.22.to_m, calculator.remaining_refundable_amount)
+      assert_equal(0.to_m, calculator.owed_to_customer)
+      assert_equal(0.to_m, calculator.refund_total)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id => 2 },
+        refund_shipping: true
+      )
+
+      assert_equal(10.2.to_m, calculator.item_total)
+      assert_equal(1.02.to_m, calculator.shipping_total)
+      assert_equal(11.22.to_m, calculator.remaining_refundable_amount)
+      assert_equal(11.22.to_m, calculator.owed_to_customer)
+      assert_equal(11.22.to_m, calculator.refund_total)
+    end
+
+    def test_metrics_data
+      order = Order.new(email: 'bcrouse@weblinc.com')
+      order.add_item(product_id: 'PRODUCT', sku: 'SKU', quantity: 3)
+      complete_checkout(order)
+      create_and_commit_shipments(order)
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id.to_s => 2 },
+        refund_items: true,
+        refund_shipping: true
+      )
+
+      data = calculator.metrics_data
+      assert(data[:occured_at].present?)
+      assert_equal(1.02, data[:shipping_value])
+      assert_equal(
+        { order.items.first.id.to_s => { quantity: 2, amount: 20.4 } },
+        data[:item_values]
+      )
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: { order.items.first.id.to_s => 2 },
+        refund_items: false,
+        refund_shipping: false
+      )
+
+      data = calculator.metrics_data
+      assert(data[:occured_at].present?)
+      assert_equal(0, data[:shipping_value])
+      assert_equal(
+        { order.items.first.id.to_s => { quantity: 2, amount: 0 } },
+        data[:item_values]
+      )
+
+      calculator = CancelCalculator.new(
+        order,
+        quantities: {}
+      )
+
+      data = calculator.metrics_data
+      assert(data[:occured_at].present?)
+      assert_equal(0, data[:shipping_value])
+      assert_equal(
+        { order.items.first.id.to_s => { quantity: 0, amount: 0 } },
+        data[:item_values]
+      )
+    end
+  end
+end

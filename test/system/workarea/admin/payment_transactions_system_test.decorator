@@ -1,0 +1,38 @@
+module Workarea
+  module Admin
+    decorate PaymentTransactionsSystemTest, with: :taxjar do
+      def test_viewing_transactions
+        Workarea.config.auto_capture = false
+
+        order = create_placed_order(id: 'FOO')
+        payment = Payment.find(order.id)
+        auth = payment.credit_card.transactions.first
+        capture = payment.credit_card.build_transaction(
+          action: 'capture',
+          amount: auth.amount,
+          reference: auth
+        )
+        capture.complete!
+
+        visit admin.payment_transactions_path
+
+        click_button 'Transaction'
+        assert_text('Authorize (1)')
+        assert_text('Capture (1)')
+        click_button 'Transaction' # closes filter dropdown
+
+        click_button 'Auth Status'
+        assert_text('Captured (1)')
+
+        visit admin.payment_transactions_path
+        click_link 'Authorize', match: :first
+
+        assert_text('Transaction')
+        assert_text('Credit Card')
+        assert_text("#{Money.default_currency.symbol}11.02")
+        assert_text('Bogus Gateway: Forced success')
+        assert_text('Capture')
+      end
+    end
+  end
+end
