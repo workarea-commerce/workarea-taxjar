@@ -12,8 +12,8 @@ Workarea.configure do |config|
   config.taxjar.timeout = 2
   config.taxjar.test = Rails.env.production? ? true : false
 
-  config.sandbox_enpoint = "https://api.sandbox.taxjar.com"
-  config.production_enpoint = "https://api.taxjar.com"
+  config.taxjar.sandbox_endpoint = "https://api.sandbox.taxjar.com"
+  config.taxjar.production_enpoint = "https://api.taxjar.com"
 
   config.seeds.append("Workarea::TaxjarSeeds")
 end
