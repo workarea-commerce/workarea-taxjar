@@ -29,7 +29,7 @@ module Workarea
     end
 
     def self.gateway
-      if credentials.present?
+      if config.enabled && credentials.present?
         ::Taxjar::Client.new(
           api_key: api_key,
           timeout: config.timeout,
