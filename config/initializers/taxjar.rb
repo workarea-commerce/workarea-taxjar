@@ -18,9 +18,9 @@ Workarea.configure do |config|
   config.taxjar.production_endpoint = "https://api.taxjar.com"
 
   config.seeds.append("Workarea::TaxjarSeeds")
-end
 
-Workarea.config.pricing_calculators.swap(
-  "Workarea::Pricing::Calculators::TaxCalculator",
-  "Workarea::Pricing::Calculators::TaxjarTaxCalculator"
-)
+  config.pricing_calculators.swap(
+    "Workarea::Pricing::Calculators::TaxCalculator",
+    "Workarea::Pricing::Calculators::TaxjarTaxCalculator"
+  )
+end

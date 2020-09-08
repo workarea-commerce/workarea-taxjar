@@ -4,6 +4,7 @@ module Workarea
   module Pricing
     module Calculators
       class TaxjarTaxCalculatorTest < Workarea::TestCase
+        setup :configure_taxjar
         setup :setup_order
 
         def test_adjust_in_non_taxable_region
@@ -89,6 +90,10 @@ module Workarea
           )
           @order = order
           @shipping = shipping
+        end
+
+        def configure_taxjar
+          Workarea.config.taxjar.enabled = true
         end
       end
     end
