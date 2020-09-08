@@ -1,14 +1,17 @@
 name: CI
 on: [push]
-env:
-  BUNDLE_GEMS__WORKAREA__COM: ${{ secrets.BUNDLE_GEMS__WORKAREA__COM }}
+
 jobs:
   static_analysis:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: workarea-commerce/ci/bundler-audit@v1
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
     - uses: workarea-commerce/ci/rubocop@v1
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
 
   admin_tests:
     runs-on: ubuntu-latest
@@ -20,6 +23,8 @@ jobs:
     - uses: workarea-commerce/ci/test@v1
       with:
         command: bin/rails app:workarea:test:admin
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
 
   core_tests:
     runs-on: ubuntu-latest
@@ -31,6 +36,8 @@ jobs:
     - uses: workarea-commerce/ci/test@v1
       with:
         command: bin/rails app:workarea:test:core
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
 
   storefront_tests:
     runs-on: ubuntu-latest
@@ -42,6 +49,8 @@ jobs:
     - uses: workarea-commerce/ci/test@v1
       with:
         command: bin/rails app:workarea:test:storefront
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
 
   plugins_tests:
     runs-on: ubuntu-latest
@@ -53,3 +62,5 @@ jobs:
     - uses: workarea-commerce/ci/test@v1
       with:
         command: bin/rails app:workarea:test:plugins
+      env:
+        GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_ACCESS_TOKEN }}
