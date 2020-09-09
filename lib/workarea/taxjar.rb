@@ -30,14 +30,11 @@ module Workarea
 
     def self.gateway
       if credentials.present?
-        attrs = {
+        ::Taxjar::Client.new(
           api_key: api_key,
           timeout: config.timeout,
-          endpoint: test? ? config.sandbox_enpoint : config.production_endpoint
-        }
-
-        ::Taxjar::Client.new(attrs)
-
+          endpoint: test? ? config.sandbox_endpoint : config.production_endpoint
+        )
       else
         Taxjar::BogusGateway.new
       end

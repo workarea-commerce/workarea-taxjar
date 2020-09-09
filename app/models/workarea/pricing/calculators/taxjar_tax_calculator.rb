@@ -2,10 +2,9 @@ module Workarea
   module Pricing
     module Calculators
       # calculates order/shipping sales tax via the Taxjar API
-      class TaxjarTaxCalculator
-        include Calculator
-
+      class TaxjarTaxCalculator < TaxCalculator
         def adjust
+          return super unless Workarea.config.taxjar.enabled
           return unless in_taxable_region?
 
           Workarea::CircuitBreaker[:taxjar_service].wrap(fallback: :fallback) do
@@ -54,17 +53,6 @@ module Workarea
             Pricing::Calculators::TaxCalculator.new(request).adjust
           end
           alias_method :handle_timeout_error, :fallback
-
-          # If doing split shipping (different items go to different shipping
-          # addresses), decorate this method to return the proper price
-          # adjustments that match the shipping. (This will have to be added to
-          # the UI and saved, probably on the Shipping object)
-          #
-          # @return [PriceAdjustmentSet]
-          #
-          def price_adjustments_for(shipping)
-            order.price_adjustments
-          end
 
           def adjust_pricing(shipping, tax_line, data = {})
             return if tax_line.fetch(:tax_collectable, nil).to_m.zero?
